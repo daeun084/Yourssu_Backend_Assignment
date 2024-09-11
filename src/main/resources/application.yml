@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: yourssu_backend
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/yourssu_backend
+    username:
+    password:
+    sql:
+      init:
+        platform: mysql
+
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: update
+    generate-ddl: true
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  logging.level:
+    org.hibernate.SQL: debug
+
