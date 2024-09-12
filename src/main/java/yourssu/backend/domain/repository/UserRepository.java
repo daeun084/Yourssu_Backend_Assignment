@@ -4,4 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import yourssu.backend.domain.entity.User;
 
 public interface UserRepository extends JpaRepository<User, Long> {
+    Boolean existsUserByUsername(String username);
+
+    Boolean existsUserByEmail(String email);
 }
