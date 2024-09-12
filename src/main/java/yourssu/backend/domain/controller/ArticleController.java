@@ -1,10 +1,7 @@
 package yourssu.backend.domain.controller;
 
 import lombok.AllArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import yourssu.backend.common.response.ApiResponse;
 import yourssu.backend.common.status.SuccessStatus;
 import yourssu.backend.domain.dto.request.ArticleRequest;
@@ -19,5 +16,11 @@ public class ArticleController {
     @PostMapping()
     public ApiResponse postArticle(@RequestBody ArticleRequest.ArticleDto articleDto){
         return ApiResponse.SuccessResponse(SuccessStatus.ARTICLE_POST_SUCCESS, articleService.postArticle(articleDto));
+    }
+
+    @PatchMapping("/{articleId}")
+    public ApiResponse patchArticle(@RequestBody ArticleRequest.ArticleDto articleDto,
+                                    @PathVariable(name = "articleId") Long articleId){
+        return ApiResponse.SuccessResponse(SuccessStatus.ARTICLE_PATCH_SUCCESS, articleService.patchArticle(articleDto, articleId));
     }
 }

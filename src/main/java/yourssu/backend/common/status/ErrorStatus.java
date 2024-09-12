@@ -24,9 +24,15 @@ public enum ErrorStatus implements BaseErrorCode {
     INVALID_CONTENT(HttpStatus.BAD_REQUEST, 400, "유효하지 않은 content 형식입니다."),
 
     /**
+     * 401
+     */
+    UNAUTHORIZED_PATCH_ARTICLE(HttpStatus.UNAUTHORIZED, 401, "게시글 수정 권한이 없습니다."),
+
+    /**
      * 404
      */
-    NOT_FOUND_USER(HttpStatus.NOT_FOUND, 404, "존재하지 않는 유저입니다.");
+    NOT_FOUND_USER(HttpStatus.NOT_FOUND, 404, "존재하지 않는 유저입니다."),
+    NOT_FOUND_ARTICLE(HttpStatus.NOT_FOUND, 404, "존재하지 않는 게시글입니다.");
 
 
 
