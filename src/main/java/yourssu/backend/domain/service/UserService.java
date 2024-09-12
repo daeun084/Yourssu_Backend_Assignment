@@ -20,7 +20,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-zA-Z0-9+-\\_.]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$");
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-zA-Z0-9+-_.]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$");
 
 
     /*
@@ -32,8 +32,11 @@ public class UserService {
     public UserResponse.UserDto signUp(UserRequest.SignUpDto request){
         String username = request.getUsername();
         String email = request.getEmail();
-        validateEmail(email);
         String password = passwordEncoder.encode(request.getPassword());
+
+        validateEmailPattern(email);
+        checkDuplicateEmail(email);
+        checkDuplicateUsername(username);
 
         User user = UserConverter.toUser(email, username, password);
         userRepository.save(user);
@@ -41,9 +44,21 @@ public class UserService {
         return UserConverter.toUserDto(user);
     }
 
-    private void validateEmail(String email) {
+    private void validateEmailPattern(String email) {
         if (!EMAIL_PATTERN.matcher(email).matches()){
             throw new GeneralException(ErrorStatus.INVALID_EMAIL);
+        }
+    }
+
+    private void checkDuplicateEmail(String email) {
+        if (userRepository.existsUserByEmail(email)){
+            throw new GeneralException(ErrorStatus.DUPLICATE_EMAIL);
+        }
+    }
+
+    private void checkDuplicateUsername(String username) {
+        if (userRepository.existsUserByUsername(username)){
+            throw new GeneralException(ErrorStatus.DUPLICATE_USERNAME);
         }
     }
 

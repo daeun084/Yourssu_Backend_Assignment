@@ -10,8 +10,15 @@ import yourssu.backend.common.base.ErrorReasonDto;
 @AllArgsConstructor
 public enum ErrorStatus implements BaseErrorCode {
 
+    /**
+     * 400
+     */
     TMP_ERROR(HttpStatus.BAD_REQUEST, 400, "TMP ERROR"),
-    INVALID_EMAIL(HttpStatus.BAD_REQUEST, 400, "이메일 형식이 올바르지 않습니다.");
+    INVALID_EMAIL(HttpStatus.BAD_REQUEST, 400, "이메일 형식이 올바르지 않습니다."),
+    DUPLICATE_USERNAME(HttpStatus.BAD_REQUEST, 400, "해당 유저 이름이 이미 존재합니다."),
+    DUPLICATE_EMAIL(HttpStatus.BAD_REQUEST, 400, "해당 이메일로 생성된 계정이 이미 존재합니다.");
+
+
 
     private final HttpStatus httpStatus;
     private final int code;
