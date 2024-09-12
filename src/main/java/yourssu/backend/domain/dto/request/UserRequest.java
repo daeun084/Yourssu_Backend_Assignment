@@ -17,4 +17,14 @@ public class UserRequest {
         @NotBlank
         private String username;
     }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SignInDto {
+        @NotBlank
+        private String email;
+        @NotBlank
+        private String password;
+    }
 }
