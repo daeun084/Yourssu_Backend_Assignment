@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.*;
 import yourssu.backend.common.response.ApiResponse;
 import yourssu.backend.common.status.SuccessStatus;
 import yourssu.backend.domain.dto.request.ArticleRequest;
+import yourssu.backend.domain.dto.request.UserRequest;
 import yourssu.backend.domain.service.ArticleService;
 
 @RestController
@@ -22,5 +23,12 @@ public class ArticleController {
     public ApiResponse patchArticle(@RequestBody ArticleRequest.ArticleDto articleDto,
                                     @PathVariable(name = "articleId") Long articleId){
         return ApiResponse.SuccessResponse(SuccessStatus.ARTICLE_PATCH_SUCCESS, articleService.patchArticle(articleDto, articleId));
+    }
+
+    @DeleteMapping("/{articleId}")
+    public ApiResponse deleteArticle(@RequestBody UserRequest.SignInDto signInDto,
+                                     @PathVariable(name = "articleId") Long articleId){
+        articleService.deleteArticle(signInDto, articleId);
+        return ApiResponse.SuccessResponse(SuccessStatus.ARTICLE_DELETE_SUCCESS);
     }
 }

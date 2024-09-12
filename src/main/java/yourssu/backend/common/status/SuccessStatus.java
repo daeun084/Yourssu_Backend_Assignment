@@ -19,7 +19,8 @@ public enum SuccessStatus {
      * Article
      */
     ARTICLE_POST_SUCCESS(HttpStatus.OK, 200, "게시물 작성에 성공했습니다."),
-    ARTICLE_PATCH_SUCCESS(HttpStatus.OK, 200, "게시물 수정에 성공했습니다.");
+    ARTICLE_PATCH_SUCCESS(HttpStatus.OK, 200, "게시물 수정에 성공했습니다."),
+    ARTICLE_DELETE_SUCCESS(HttpStatus.OK, 200, "게시물 삭제에 성공했습니다.");
 
 
     private final HttpStatus httpStatus;

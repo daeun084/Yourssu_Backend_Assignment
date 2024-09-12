@@ -8,6 +8,7 @@ import yourssu.backend.common.exception.GeneralException;
 import yourssu.backend.common.status.ErrorStatus;
 import yourssu.backend.domain.converter.ArticleConverter;
 import yourssu.backend.domain.dto.request.ArticleRequest;
+import yourssu.backend.domain.dto.request.UserRequest;
 import yourssu.backend.domain.dto.response.ArticleResponse;
 import yourssu.backend.domain.entity.Article;
 import yourssu.backend.domain.entity.User;
@@ -53,6 +54,7 @@ public class ArticleService {
     public ArticleResponse.ArticleDto patchArticle(ArticleRequest.ArticleDto request, Long articleId){
         // 사용자 객체 조회
         User user = validateUserCredentials(request.getEmail(), request.getPassword());
+
         // 게시글 조회 후 사용자 본인의 글인지 확인
         Article article = findArticleById(articleId);
         validateIsUserAuthorized(user, article);
@@ -66,6 +68,23 @@ public class ArticleService {
         article.updateContent(content);
 
         return ArticleConverter.toArticleDto(article);
+    }
+
+    /*
+     * user 정보, articleId를 받아 본인의 게시글을 삭제하는 기능
+     * @param request
+     * @param articleId
+     */
+    @Transactional
+    public void deleteArticle(UserRequest.SignInDto request, Long articleId){
+        // 사용자 객체 조회
+        User user = validateUserCredentials(request.getEmail(), request.getPassword());
+
+        // 게시글 조회 후 사용자 본인의 글인지 확인
+        Article article = findArticleById(articleId);
+        validateIsUserAuthorized(user, article);
+
+        articleRepository.delete(article);
     }
 
     private User validateUserCredentials(String email, String password) {
