@@ -6,6 +6,7 @@ import yourssu.backend.common.response.ApiResponse;
 import yourssu.backend.common.status.SuccessStatus;
 import yourssu.backend.domain.dto.request.ArticleRequest;
 import yourssu.backend.domain.dto.request.CommentRequest;
+import yourssu.backend.domain.dto.request.UserRequest;
 import yourssu.backend.domain.service.CommentService;
 
 @RestController
@@ -23,5 +24,12 @@ public class CommentController {
     public ApiResponse patchComment(@RequestBody CommentRequest.PatchCommentDto commentDto,
                                     @PathVariable(name = "commentId") Long commentId){
         return ApiResponse.SuccessResponse(SuccessStatus.ARTICLE_PATCH_SUCCESS, commentService.patchComment(commentDto, commentId));
+    }
+
+    @DeleteMapping("/{commentId}")
+    public ApiResponse deleteComment(@RequestBody UserRequest.SignInDto signInDto,
+                                     @PathVariable(name = "commentId") Long commentId){
+        commentService.deleteComment(signInDto, commentId);
+        return ApiResponse.SuccessResponse(SuccessStatus.ARTICLE_DELETE_SUCCESS);
     }
 }

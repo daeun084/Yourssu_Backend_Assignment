@@ -8,6 +8,7 @@ import yourssu.backend.common.exception.GeneralException;
 import yourssu.backend.common.status.ErrorStatus;
 import yourssu.backend.domain.converter.CommentConverter;
 import yourssu.backend.domain.dto.request.CommentRequest;
+import yourssu.backend.domain.dto.request.UserRequest;
 import yourssu.backend.domain.dto.response.CommentResponse;
 import yourssu.backend.domain.entity.Article;
 import yourssu.backend.domain.entity.Comment;
@@ -60,6 +61,21 @@ public class CommentService {
         comment.updateContent(content);
 
         return CommentConverter.toCommentDto(comment);
+    }
+
+    /*
+     * user 정보, commentId를 받아 본인의 댓글을 삭제
+     * @param request
+     * @param commentId
+     */
+    @Transactional
+    public void deleteComment(UserRequest.SignInDto request, Long commentId){
+        User user = validateUserCredentials(request.getEmail(), request.getPassword());
+
+        Comment comment = findCommentById(commentId);
+        validateIsUserAuthorized(user, comment);
+
+        commentRepository.delete(comment);
     }
 
     private User validateUserCredentials(String email, String password) {
