@@ -25,7 +25,8 @@ public enum SuccessStatus {
     /**
      * Comment
      */
-    COMMENT_POST_SUCCESS(HttpStatus.OK, 200, "댓글 작성에 성공했습니다.");
+    COMMENT_POST_SUCCESS(HttpStatus.OK, 200, "댓글 작성에 성공했습니다."),
+    COMMENT_PATCH_SUCCESS(HttpStatus.OK, 200, "댓글 수정에 성공했습니다.");
 
 
     private final HttpStatus httpStatus;

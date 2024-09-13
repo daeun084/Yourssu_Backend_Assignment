@@ -9,13 +9,25 @@ public class CommentRequest {
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class CommentDto {
+    public static class PostCommentDto {
         @NotBlank
         private String email;
         @NotBlank
         private String password;
         @NotBlank
         private Long articleId;
+        @NotBlank
+        private String content;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PatchCommentDto {
+        @NotBlank
+        private String email;
+        @NotBlank
+        private String password;
         @NotBlank
         private String content;
     }

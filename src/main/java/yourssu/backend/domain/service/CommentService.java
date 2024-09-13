@@ -30,7 +30,7 @@ public class CommentService {
      * @return
      */
     @Transactional
-    public CommentResponse.CommentDto postComment(CommentRequest.CommentDto request) {
+    public CommentResponse.CommentDto postComment(CommentRequest.PostCommentDto request) {
         User user = validateUserCredentials(request.getEmail(), request.getPassword());
         Article article = findArticleById(request.getArticleId());
         String content = validateContent(request.getContent());
@@ -39,6 +39,25 @@ public class CommentService {
         commentRepository.save(comment);
         user.addCommentList(comment);
         article.addCommentList(comment);
+
+        return CommentConverter.toCommentDto(comment);
+    }
+
+    /*
+     * user 정보, content를 받아 본인의 댓글을 수정 후 comment 정보 반환
+     * @param request
+     * @param commentId
+     * @return
+     */
+    @Transactional
+    public CommentResponse.CommentDto patchComment(CommentRequest.PatchCommentDto request, Long commentId) {
+        User user = validateUserCredentials(request.getEmail(), request.getPassword());
+
+        Comment comment = findCommentById(commentId);
+        validateIsUserAuthorized(user, comment);
+
+        String content = validateContent(request.getContent());
+        comment.updateContent(content);
 
         return CommentConverter.toCommentDto(comment);
     }
@@ -59,6 +78,12 @@ public class CommentService {
         return content;
     }
 
+    private void validateIsUserAuthorized(User user, Comment comment) {
+        if (!comment.getUser().getUserId().equals(user.getUserId())) {
+            throw new GeneralException(ErrorStatus.UNAUTHORIZED_PATCH_COMMENT);
+        }
+    }
+
     private User findUserByEmail(String email){
         return userRepository.findUserByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_USER));
@@ -67,5 +92,10 @@ public class CommentService {
     private Article findArticleById(Long articleId){
         return articleRepository.findById(articleId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_ARTICLE));
+    }
+
+    private Comment findCommentById(Long commentId){
+        return commentRepository.findById(commentId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_COMMENT));
     }
 }
