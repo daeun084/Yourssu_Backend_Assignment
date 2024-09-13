@@ -27,4 +27,14 @@ public class UserRequest {
         @NotBlank
         private String password;
     }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class WithDrawalDto {
+        @NotBlank
+        private String email;
+        @NotBlank
+        private String password;
+    }
 }

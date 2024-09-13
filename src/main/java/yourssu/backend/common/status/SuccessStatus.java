@@ -14,6 +14,7 @@ public enum SuccessStatus {
      * User
      */
     SIGN_UP_SUCCESS(HttpStatus.OK, 200, "회원가입에 성공했습니다."),
+    WITHDRAWAL_SUCCESS(HttpStatus.OK, 200, "회원탈퇴에 성공했습니다."),
 
     /**
      * Article
