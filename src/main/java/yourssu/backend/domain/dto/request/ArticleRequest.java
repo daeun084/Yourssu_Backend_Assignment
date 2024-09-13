@@ -11,10 +11,6 @@ public class ArticleRequest {
     @AllArgsConstructor
     public static class ArticleDto {
         @NotBlank
-        private String email;
-        @NotBlank
-        private String password;
-        @NotBlank
         private String title;
         @NotBlank
         private String content;
