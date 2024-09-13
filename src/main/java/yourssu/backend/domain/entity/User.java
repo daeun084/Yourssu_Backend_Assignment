@@ -35,11 +35,4 @@ public class User extends BaseEntity {
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "user")
     private List<Comment> commentList;
 
-    public void addArticleList(Article article){
-        this.articleList.add(article);
-    }
-
-    public void addCommentList(Comment comment){
-        this.commentList.add(comment);
-    }
 }

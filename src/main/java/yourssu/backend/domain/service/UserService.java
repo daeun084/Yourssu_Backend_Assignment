@@ -9,14 +9,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import yourssu.backend.common.exception.GeneralException;
 import yourssu.backend.common.security.JwtTokenProvider;
-import yourssu.backend.common.security.TokenDto;
+import yourssu.backend.common.security.UserPrincipal;
+import yourssu.backend.domain.dto.response.TokenDto;
 import yourssu.backend.common.status.ErrorStatus;
 import yourssu.backend.domain.converter.UserConverter;
 import yourssu.backend.domain.dto.request.UserRequest;
 import yourssu.backend.domain.dto.response.UserResponse;
+import yourssu.backend.domain.entity.Comment;
 import yourssu.backend.domain.entity.User;
 import yourssu.backend.domain.repository.UserRepository;
 
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 @Service
@@ -51,6 +54,11 @@ public class UserService {
         return UserConverter.toUserDto(user);
     }
 
+    /*
+     * 이메일, 비밀번호를 받아 로그인 후 토큰 반환
+     * @param request
+     * @return
+     */
     @Transactional
     public TokenDto signIn(UserRequest.SignInDto request) {
         Authentication authentication = authenticationManager.authenticate(
@@ -64,9 +72,12 @@ public class UserService {
      * @param request
      */
     @Transactional
-    public void withdrawal(UserRequest.WithDrawalDto request){
-        User user = validateUserCredentials(request.getEmail(), request.getPassword());
-        userRepository.delete(user);
+    public void withdrawal(UserRequest.WithDrawalDto request, UserPrincipal userprincipal){
+        User user = userprincipal.getUser();
+        User targetUser = validateUserCredentials(request.getEmail(), request.getPassword());
+        validateIsUserAuthorized(user, targetUser);
+
+        userRepository.delete(targetUser);
     }
 
     private void validateEmailPattern(String email) {
@@ -94,6 +105,11 @@ public class UserService {
             throw new GeneralException(ErrorStatus.NOT_MATCH_PASSWORD);
         }
         return user;
+    }
+
+    private void validateIsUserAuthorized(User user, User targetUser) {
+        if (!Objects.equals(user.getUserId(), targetUser.getUserId()))
+            throw new GeneralException(ErrorStatus.FORBIDDEN_WITHDRAWAL);
     }
 
     private User findUserByEmail(String email){

@@ -41,7 +41,4 @@ public class Article extends BaseEntity {
         this.content = content;
     }
 
-    public void addCommentList(Comment comment){
-        this.commentList.add(comment);
-    }
 }

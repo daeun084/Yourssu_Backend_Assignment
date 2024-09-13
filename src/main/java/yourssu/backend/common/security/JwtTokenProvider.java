@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import yourssu.backend.domain.converter.TokenConverter;
+import yourssu.backend.domain.dto.response.TokenDto;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
@@ -33,7 +34,6 @@ public class JwtTokenProvider {
     @Transactional
     public TokenDto createToken(Authentication authentication){
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        System.out.println("userDetail"+userDetails.getUsername()+"/"+userDetails.getPassword());
         String authorities = getAuthorities(authentication);
 
         String username = userDetails.getUsername();

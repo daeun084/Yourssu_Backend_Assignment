@@ -79,7 +79,7 @@ public class CommentService {
 
     private void validateIsUserAuthorized(User user, Comment comment) {
         if (!comment.getUser().getUserId().equals(user.getUserId())) {
-            throw new GeneralException(ErrorStatus.UNAUTHORIZED_PATCH_COMMENT);
+            throw new GeneralException(ErrorStatus.FORBIDDEN_PATCH_COMMENT);
         }
     }
 

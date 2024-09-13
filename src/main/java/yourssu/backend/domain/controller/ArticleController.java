@@ -2,14 +2,11 @@ package yourssu.backend.domain.controller;
 
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import yourssu.backend.common.response.ApiResponse;
-import yourssu.backend.common.security.TokenDto;
 import yourssu.backend.common.security.UserPrincipal;
 import yourssu.backend.common.status.SuccessStatus;
 import yourssu.backend.domain.dto.request.ArticleRequest;
-import yourssu.backend.domain.dto.request.UserRequest;
 import yourssu.backend.domain.service.ArticleService;
 
 @RestController

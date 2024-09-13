@@ -1,4 +1,4 @@
-package yourssu.backend.common.security;
+package yourssu.backend.domain.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

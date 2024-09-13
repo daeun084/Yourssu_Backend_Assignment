@@ -24,10 +24,11 @@ public enum ErrorStatus implements BaseErrorCode {
     INVALID_CONTENT(HttpStatus.BAD_REQUEST, 400, "유효하지 않은 content 형식입니다."),
 
     /**
-     * 401
+     * 403
      */
-    UNAUTHORIZED_PATCH_ARTICLE(HttpStatus.UNAUTHORIZED, 401, "게시글 수정 권한이 없습니다."),
-    UNAUTHORIZED_PATCH_COMMENT(HttpStatus.UNAUTHORIZED, 401, "댓글 수정 권한이 없습니다."),
+    FORBIDDEN_PATCH_ARTICLE(HttpStatus.FORBIDDEN, 403, "게시글 수정 권한이 없습니다."),
+    FORBIDDEN_PATCH_COMMENT(HttpStatus.FORBIDDEN, 403, "댓글 수정 권한이 없습니다."),
+    FORBIDDEN_WITHDRAWAL(HttpStatus.FORBIDDEN, 403, "계정탈퇴 권한이 없습니다."),
 
     /**
      * 404

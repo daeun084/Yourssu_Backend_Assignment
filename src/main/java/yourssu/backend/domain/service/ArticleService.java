@@ -90,7 +90,7 @@ public class ArticleService {
 
     private void validateIsUserAuthorized(User user, Article article) {
         if (!article.getUser().getUserId().equals(user.getUserId())) {
-            throw new GeneralException(ErrorStatus.UNAUTHORIZED_PATCH_ARTICLE);
+            throw new GeneralException(ErrorStatus.FORBIDDEN_PATCH_ARTICLE);
         }
     }
 
