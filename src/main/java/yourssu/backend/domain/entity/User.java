@@ -38,4 +38,8 @@ public class User extends BaseEntity {
     public void addArticleList(Article article){
         this.articleList.add(article);
     }
+
+    public void addCommentList(Comment comment){
+        this.commentList.add(comment);
+    }
 }
