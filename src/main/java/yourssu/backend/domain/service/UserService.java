@@ -44,6 +44,16 @@ public class UserService {
         return UserConverter.toUserDto(user);
     }
 
+    /*
+     * 메일, 전화번호를 받아 유저 삭제
+     * @param request
+     */
+    @Transactional
+    public void withdrawal(UserRequest.WithDrawalDto request){
+        User user = validateUserCredentials(request.getEmail(), request.getPassword());
+        userRepository.delete(user);
+    }
+
     private void validateEmailPattern(String email) {
         if (!EMAIL_PATTERN.matcher(email).matches()){
             throw new GeneralException(ErrorStatus.INVALID_EMAIL);
@@ -60,6 +70,20 @@ public class UserService {
         if (userRepository.existsUserByUsername(username)){
             throw new GeneralException(ErrorStatus.DUPLICATE_USERNAME);
         }
+    }
+
+    private User validateUserCredentials(String email, String password) {
+        User user = findUserByEmail(email);
+
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new GeneralException(ErrorStatus.NOT_MATCH_PASSWORD);
+        }
+        return user;
+    }
+
+    private User findUserByEmail(String email){
+        return userRepository.findUserByEmail(email)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_USER));
     }
 
 }
