@@ -18,6 +18,11 @@ public class UserController {
         return ApiResponse.SuccessResponse(SuccessStatus.SIGN_UP_SUCCESS, userService.signUp(signUpDto));
     }
 
+    @PostMapping("/sign-in")
+    public ApiResponse signIn(@RequestBody UserRequest.SignInDto signInDto){
+        return ApiResponse.SuccessResponse(SuccessStatus.SIGN_IN_SUCCESS, userService.signIn(signInDto));
+    }
+
     @DeleteMapping("/withdrawal")
     public ApiResponse withdrawal(@RequestBody UserRequest.WithDrawalDto withDrawalDto){
         userService.withdrawal(withDrawalDto);

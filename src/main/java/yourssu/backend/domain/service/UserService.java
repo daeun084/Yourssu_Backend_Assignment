@@ -1,10 +1,15 @@
 package yourssu.backend.domain.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import yourssu.backend.common.exception.GeneralException;
+import yourssu.backend.common.security.JwtTokenProvider;
+import yourssu.backend.common.security.TokenDto;
 import yourssu.backend.common.status.ErrorStatus;
 import yourssu.backend.domain.converter.UserConverter;
 import yourssu.backend.domain.dto.request.UserRequest;
@@ -19,6 +24,8 @@ import java.util.regex.Pattern;
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final AuthenticationManager authenticationManager;
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-zA-Z0-9+-_.]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$");
 
@@ -42,6 +49,14 @@ public class UserService {
         userRepository.save(user);
 
         return UserConverter.toUserDto(user);
+    }
+
+    @Transactional
+    public TokenDto signIn(UserRequest.SignInDto request) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+        );
+        return jwtTokenProvider.createToken(authentication);
     }
 
     /*
