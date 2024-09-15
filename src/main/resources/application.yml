@@ -23,3 +23,7 @@ spring:
   logging.level:
     org.hibernate.SQL: debug
 
+jwt:
+  secret-key: AP1QJt5Qm8Yjsjm+72kh5g93VThfdqzbXvV4ierEH4w=
+  access-expiration-ms: 18000000 #1000 * 60 * 300
+  refresh-expiration-ms: 180000000 #1000 * 60 * 3000
