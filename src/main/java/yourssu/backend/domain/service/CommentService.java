@@ -1,29 +1,25 @@
 package yourssu.backend.domain.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import yourssu.backend.common.exception.GeneralException;
+import yourssu.backend.common.security.UserPrincipal;
 import yourssu.backend.common.status.ErrorStatus;
 import yourssu.backend.domain.converter.CommentConverter;
 import yourssu.backend.domain.dto.request.CommentRequest;
-import yourssu.backend.domain.dto.request.UserRequest;
 import yourssu.backend.domain.dto.response.CommentResponse;
 import yourssu.backend.domain.entity.Article;
 import yourssu.backend.domain.entity.Comment;
 import yourssu.backend.domain.entity.User;
 import yourssu.backend.domain.repository.ArticleRepository;
 import yourssu.backend.domain.repository.CommentRepository;
-import yourssu.backend.domain.repository.UserRepository;
 
 @Service
 @RequiredArgsConstructor
 public class CommentService {
     private final CommentRepository commentRepository;
     private final ArticleRepository articleRepository;
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
 
     /*
      * user 정보, articleId, content를 받아 댓글을 작성 후 comment 정보 반환
@@ -31,15 +27,13 @@ public class CommentService {
      * @return
      */
     @Transactional
-    public CommentResponse.CommentDto postComment(CommentRequest.PostCommentDto request) {
-        User user = validateUserCredentials(request.getEmail(), request.getPassword());
+    public CommentResponse.CommentDto postComment(CommentRequest.PostCommentDto request, UserPrincipal userprincipal) {
+        User user = userprincipal.getUser();
         Article article = findArticleById(request.getArticleId());
         String content = validateContent(request.getContent());
 
         Comment comment = CommentConverter.toComment(content, user, article);
         commentRepository.save(comment);
-        user.addCommentList(comment);
-        article.addCommentList(comment);
 
         return CommentConverter.toCommentDto(comment);
     }
@@ -51,9 +45,8 @@ public class CommentService {
      * @return
      */
     @Transactional
-    public CommentResponse.CommentDto patchComment(CommentRequest.PatchCommentDto request, Long commentId) {
-        User user = validateUserCredentials(request.getEmail(), request.getPassword());
-
+    public CommentResponse.CommentDto patchComment(CommentRequest.PatchCommentDto request, Long commentId, UserPrincipal userprincipal) {
+        User user = userprincipal.getUser();
         Comment comment = findCommentById(commentId);
         validateIsUserAuthorized(user, comment);
 
@@ -69,22 +62,12 @@ public class CommentService {
      * @param commentId
      */
     @Transactional
-    public void deleteComment(UserRequest.SignInDto request, Long commentId){
-        User user = validateUserCredentials(request.getEmail(), request.getPassword());
-
+    public void deleteComment(Long commentId, UserPrincipal userprincipal){
+        User user = userprincipal.getUser();
         Comment comment = findCommentById(commentId);
         validateIsUserAuthorized(user, comment);
 
         commentRepository.delete(comment);
-    }
-
-    private User validateUserCredentials(String email, String password) {
-        User user = findUserByEmail(email);
-
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new GeneralException(ErrorStatus.NOT_MATCH_PASSWORD);
-        }
-        return user;
     }
 
     private String validateContent(String content) {
@@ -96,13 +79,8 @@ public class CommentService {
 
     private void validateIsUserAuthorized(User user, Comment comment) {
         if (!comment.getUser().getUserId().equals(user.getUserId())) {
-            throw new GeneralException(ErrorStatus.UNAUTHORIZED_PATCH_COMMENT);
+            throw new GeneralException(ErrorStatus.FORBIDDEN_PATCH_COMMENT);
         }
-    }
-
-    private User findUserByEmail(String email){
-        return userRepository.findUserByEmail(email)
-                .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_USER));
     }
 
     private Article findArticleById(Long articleId){

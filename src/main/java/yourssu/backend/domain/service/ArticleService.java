@@ -1,26 +1,22 @@
 package yourssu.backend.domain.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import yourssu.backend.common.exception.GeneralException;
+import yourssu.backend.common.security.UserPrincipal;
 import yourssu.backend.common.status.ErrorStatus;
 import yourssu.backend.domain.converter.ArticleConverter;
 import yourssu.backend.domain.dto.request.ArticleRequest;
-import yourssu.backend.domain.dto.request.UserRequest;
 import yourssu.backend.domain.dto.response.ArticleResponse;
 import yourssu.backend.domain.entity.Article;
 import yourssu.backend.domain.entity.User;
 import yourssu.backend.domain.repository.ArticleRepository;
-import yourssu.backend.domain.repository.UserRepository;
 
 @Service
 @RequiredArgsConstructor
 public class ArticleService {
     private final ArticleRepository articleRepository;
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
 
     /*
      * user 정보, title, content를 받아 게시글을 작성 후 article 정보 반환
@@ -28,9 +24,8 @@ public class ArticleService {
      * @return
      */
     @Transactional
-    public ArticleResponse.ArticleDto postArticle(ArticleRequest.ArticleDto request){
-        // 사용자 객체 조회
-        User user = validateUserCredentials(request.getEmail(), request.getPassword());
+    public ArticleResponse.ArticleDto postArticle(ArticleRequest.ArticleDto request, UserPrincipal userprincipal){
+        User user = userprincipal.getUser();
 
         // dto에서 게시글 정보를 가져와 validation 진행
         String title = validateContent(request.getTitle(), "title");
@@ -39,7 +34,6 @@ public class ArticleService {
         // 게시글 객체 생성 및 연관관계 설정
         Article article = ArticleConverter.toArticle(title, content, user);
         articleRepository.save(article);
-        user.addArticleList(article);
 
         return ArticleConverter.toArticleDto(article);
     }
@@ -51,9 +45,8 @@ public class ArticleService {
      * @return
      */
     @Transactional
-    public ArticleResponse.ArticleDto patchArticle(ArticleRequest.ArticleDto request, Long articleId){
-        // 사용자 객체 조회
-        User user = validateUserCredentials(request.getEmail(), request.getPassword());
+    public ArticleResponse.ArticleDto patchArticle(ArticleRequest.ArticleDto request, Long articleId, UserPrincipal userprincipal){
+        User user = userprincipal.getUser();
 
         // 게시글 조회 후 사용자 본인의 글인지 확인
         Article article = findArticleById(articleId);
@@ -76,24 +69,15 @@ public class ArticleService {
      * @param articleId
      */
     @Transactional
-    public void deleteArticle(UserRequest.SignInDto request, Long articleId){
+    public void deleteArticle(Long articleId, UserPrincipal userprincipal){
         // 사용자 객체 조회
-        User user = validateUserCredentials(request.getEmail(), request.getPassword());
+        User user = userprincipal.getUser();
 
         // 게시글 조회 후 사용자 본인의 글인지 확인
         Article article = findArticleById(articleId);
         validateIsUserAuthorized(user, article);
 
         articleRepository.delete(article);
-    }
-
-    private User validateUserCredentials(String email, String password) {
-        User user = findUserByEmail(email);
-
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new GeneralException(ErrorStatus.NOT_MATCH_PASSWORD);
-        }
-        return user;
     }
 
     private String validateContent(String content, String fieldName) {
@@ -106,13 +90,8 @@ public class ArticleService {
 
     private void validateIsUserAuthorized(User user, Article article) {
         if (!article.getUser().getUserId().equals(user.getUserId())) {
-            throw new GeneralException(ErrorStatus.UNAUTHORIZED_PATCH_ARTICLE);
+            throw new GeneralException(ErrorStatus.FORBIDDEN_PATCH_ARTICLE);
         }
-    }
-
-    private User findUserByEmail(String email){
-        return userRepository.findUserByEmail(email)
-                .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_USER));
     }
 
     private Article findArticleById(Long articleId){
