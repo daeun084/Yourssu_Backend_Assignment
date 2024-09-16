@@ -25,13 +25,13 @@ public class CommentController {
     public ApiResponse patchComment(@RequestBody CommentRequest.PatchCommentDto commentDto,
                                     @PathVariable(name = "commentId") Long commentId,
                                     @AuthenticationPrincipal UserPrincipal userprincipal){
-        return ApiResponse.SuccessResponse(SuccessStatus.ARTICLE_PATCH_SUCCESS, commentService.patchComment(commentDto, commentId, userprincipal));
+        return ApiResponse.SuccessResponse(SuccessStatus.COMMENT_PATCH_SUCCESS, commentService.patchComment(commentDto, commentId, userprincipal));
     }
 
     @DeleteMapping("/{commentId}")
     public ApiResponse deleteComment(@PathVariable(name = "commentId") Long commentId,
                                      @AuthenticationPrincipal UserPrincipal userprincipal){
         commentService.deleteComment(commentId, userprincipal);
-        return ApiResponse.SuccessResponse(SuccessStatus.ARTICLE_DELETE_SUCCESS);
+        return ApiResponse.SuccessResponse(SuccessStatus.COMMENT_DELETE_SUCCESS);
     }
 }
