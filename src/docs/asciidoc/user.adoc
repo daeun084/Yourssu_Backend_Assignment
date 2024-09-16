@@ -11,7 +11,34 @@
 === Request
 
 include::{snippets}/post-sign-up/http-request.adoc[]
+include::{snippets}/post-sign-up/request-fields.adoc[]
 
 === Response
 
 include::{snippets}/post-sign-up/http-response.adoc[]
+include::{snippets}/post-sign-up/response-fields.adoc[]
+
+
+== 로그인
+=== Request
+
+include::{snippets}/post-sign-in/http-request.adoc[]
+include::{snippets}/post-sign-in/request-fields.adoc[]
+
+
+=== Response
+
+include::{snippets}/post-sign-in/http-response.adoc[]
+include::{snippets}/post-sign-in/response-fields.adoc[]
+
+== 회원탈퇴
+=== Request
+
+include::{snippets}/delete-withdrawal/http-request.adoc[]
+include::{snippets}/delete-withdrawal/request-fields.adoc[]
+
+
+=== Response
+
+include::{snippets}/delete-withdrawal/http-response.adoc[]
+include::{snippets}/delete-withdrawal/response-fields.adoc[]

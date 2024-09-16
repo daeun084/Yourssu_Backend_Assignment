@@ -98,7 +98,7 @@ public class UserService {
         }
     }
 
-    private User validateUserCredentials(String email, String password) {
+    public User validateUserCredentials(String email, String password) {
         User user = findUserByEmail(email);
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
@@ -107,7 +107,7 @@ public class UserService {
         return user;
     }
 
-    private void validateIsUserAuthorized(User user, User targetUser) {
+    public void validateIsUserAuthorized(User user, User targetUser) {
         if (!Objects.equals(user.getUserId(), targetUser.getUserId()))
             throw new GeneralException(ErrorStatus.FORBIDDEN_WITHDRAWAL);
     }
