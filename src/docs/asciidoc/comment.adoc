@@ -1,0 +1,20 @@
+= Comment API 문서
+:doctype: book
+:icons: font
+:source-highlighter: highlightjs
+:toc: left
+:toclevels: 3
+
+
+== Comment 생성
+
+=== Request
+
+include::{snippets}/post-comment/http-request.adoc[]
+include::{snippets}/post-comment/request-fields.adoc[]
+
+=== Response
+
+include::{snippets}/post-comment/http-response.adoc[]
+include::{snippets}/post-comment/response-fields.adoc[]
+
