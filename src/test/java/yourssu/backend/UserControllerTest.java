@@ -262,7 +262,7 @@ public class UserControllerTest {
         SecurityContextHolder.getContext().setAuthentication(authenticationToken);
 
         // token mocking
-        TokenDto tokenDto = new TokenDto("fakeAccessToken", "fakeRefreshToken");
+        TokenDto tokenDto = new TokenDto("AccessToken", "RefreshToken");
         given(jwtTokenProvider.createToken(any(Authentication.class)))
                 .willReturn(tokenDto);
 

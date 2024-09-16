@@ -18,3 +18,16 @@ include::{snippets}/post-comment/request-fields.adoc[]
 include::{snippets}/post-comment/http-response.adoc[]
 include::{snippets}/post-comment/response-fields.adoc[]
 
+
+== Comment 수정
+
+=== Request
+
+include::{snippets}/patch-comment/http-request.adoc[]
+include::{snippets}/patch-comment/path-parameters.adoc[]
+include::{snippets}/patch-comment/request-fields.adoc[]
+
+=== Response
+
+include::{snippets}/patch-comment/http-response.adoc[]
+include::{snippets}/patch-comment/response-fields.adoc[]
