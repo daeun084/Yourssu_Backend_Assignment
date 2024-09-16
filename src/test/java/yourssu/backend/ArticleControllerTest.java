@@ -29,13 +29,16 @@ import yourssu.backend.domain.service.ArticleService;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.*;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.patch;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
+import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
+import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -175,7 +178,7 @@ public class ArticleControllerTest {
                 .willReturn(new ArticleResponse.ArticleDto(1L, "test@mail.com", "Test4", "test4"));
 
         // when&then
-        mockMvc.perform(patch("/api/v1/article/1")
+        mockMvc.perform(patch("/api/v1/article/{articleId}", 1L)
                         .with(authentication(authenticationToken))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -188,6 +191,9 @@ public class ArticleControllerTest {
                 .andExpect(jsonPath("$.data.title").value("Test4"))
                 .andExpect(jsonPath("$.data.content").value("test4"))
                 .andDo(document("patch-article",
+                        pathParameters(
+                                parameterWithName("articleId").description("Article Id")
+                        ),
                         requestFields(
                                 fieldWithPath("title").description("수정할 Article의 제목"),
                                 fieldWithPath("content").description("수정할 Article의 본문")
@@ -218,7 +224,7 @@ public class ArticleControllerTest {
                 .willThrow(new GeneralException(ErrorStatus.INVALID_CONTENT));
 
         // when&then
-        mockMvc.perform(patch("/api/v1/article/1")
+        mockMvc.perform(patch("/api/v1/article/{articleId}", 1L)
                         .with(authentication(authenticationToken))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -242,7 +248,7 @@ public class ArticleControllerTest {
                 .willThrow(new GeneralException(ErrorStatus.NOT_FOUND_ARTICLE));
 
         // when&then
-        mockMvc.perform(patch("/api/v1/article/30")
+        mockMvc.perform(patch("/api/v1/article/{articleId}", 30L)
                         .with(authentication(authenticationToken))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -266,7 +272,7 @@ public class ArticleControllerTest {
                 .willThrow(new GeneralException(ErrorStatus.FORBIDDEN_PATCH_ARTICLE));
 
         // when&then
-        mockMvc.perform(patch("/api/v1/article/1")
+        mockMvc.perform(patch("/api/v1/article/{articleId}", 1L)
                         .with(authentication(authenticationToken))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -277,4 +283,73 @@ public class ArticleControllerTest {
     }
 
 
-}
+    @Test
+    @DisplayName("삭제할 Article의 PK를 PathVariable로 받아 Article 객체를 삭제한다.")
+    public void deleteArticle() throws Exception {
+        // set authentication
+        UsernamePasswordAuthenticationToken authenticationToken = setAuthentication("test@mail.com", "user", "1234");
+
+        // given
+        willDoNothing().given(articleService).deleteArticle(any(), any());
+
+        // when&then
+        mockMvc.perform(delete("/api/v1/article/{articleId}", 1L)
+                        .with(authentication(authenticationToken))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("200"))
+                .andExpect(jsonPath("$.result").value("SUCCESS"))
+                .andExpect(jsonPath("$.message").value("게시물 삭제에 성공했습니다."))
+                .andDo(document("delete-article",
+                        pathParameters(
+                                parameterWithName("articleId").description("Article Id")
+                        ),
+                        responseFields(
+                                fieldWithPath("code").description("상태 코드"),
+                                fieldWithPath("result").description("결과 성공 여부"),
+                                fieldWithPath("message").description("결과 메시지")
+                        )
+                ));
+    }
+
+    @Test
+    public void deleteArticleWithNonExistArticleId() throws Exception {
+        // set authentication
+        UsernamePasswordAuthenticationToken authenticationToken = setAuthentication("test@mail.com", "user", "1234");
+
+        // given
+        // 존재하지 않는 article에 대한 id를 pathvariable로 제공할 경우, 404 error
+        doThrow(new GeneralException(ErrorStatus.NOT_FOUND_ARTICLE))
+                .when(articleService).deleteArticle(eq(30L), any());
+
+        // when&then
+        mockMvc.perform(delete("/api/v1/article/{articleId}", 30L)
+                        .with(authentication(authenticationToken))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().is4xxClientError())
+                .andExpect(jsonPath("$.code").value("404"))
+                .andExpect(jsonPath("$.result").value("FAILURE"))
+                .andExpect(jsonPath("$.message").value("존재하지 않는 게시글입니다."));
+    }
+
+    @Test
+    public void deleteArticleWithUnAuthorizedUser() throws Exception {
+        // set authentication
+        UsernamePasswordAuthenticationToken authenticationToken = setAuthentication("test@mail.com", "user", "1234");
+
+        // given
+        // Article을 작성한 유저 정보와 로그인한 유저 정보가 일치하지 않을 경우, 403 error
+        doThrow(new GeneralException(ErrorStatus.FORBIDDEN_PATCH_ARTICLE))
+                .when(articleService).deleteArticle(eq(1L), any());
+
+        // when&then
+        mockMvc.perform(delete("/api/v1/article/{articleId}", 1L)
+                        .with(authentication(authenticationToken))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().is4xxClientError())
+                .andExpect(jsonPath("$.code").value("403"))
+                .andExpect(jsonPath("$.result").value("FAILURE"))
+                .andExpect(jsonPath("$.message").value("게시글 수정 권한이 없습니다."));
+    }
+
+    }

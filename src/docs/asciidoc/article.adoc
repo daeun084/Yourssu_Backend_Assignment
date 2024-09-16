@@ -24,9 +24,23 @@ include::{snippets}/post-article/response-fields.adoc[]
 === Request
 
 include::{snippets}/patch-article/http-request.adoc[]
+include::{snippets}/patch-article/path-parameters.adoc[]
 include::{snippets}/patch-article/request-fields.adoc[]
 
 === Response
 
 include::{snippets}/patch-article/http-response.adoc[]
 include::{snippets}/patch-article/response-fields.adoc[]
+
+
+== Article 삭제
+
+=== Request
+
+include::{snippets}/delete-article/http-request.adoc[]
+include::{snippets}/delete-article/path-parameters.adoc[]
+
+=== Response
+
+include::{snippets}/delete-article/http-response.adoc[]
+include::{snippets}/delete-article/response-fields.adoc[]
