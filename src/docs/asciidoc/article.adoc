@@ -17,3 +17,16 @@ include::{snippets}/post-article/request-fields.adoc[]
 
 include::{snippets}/post-article/http-response.adoc[]
 include::{snippets}/post-article/response-fields.adoc[]
+
+
+== Article 수정
+
+=== Request
+
+include::{snippets}/patch-article/http-request.adoc[]
+include::{snippets}/patch-article/request-fields.adoc[]
+
+=== Response
+
+include::{snippets}/patch-article/http-response.adoc[]
+include::{snippets}/patch-article/response-fields.adoc[]
