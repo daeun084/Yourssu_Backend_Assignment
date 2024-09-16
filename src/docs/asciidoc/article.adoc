@@ -1,0 +1,19 @@
+= Article API 문서
+:doctype: book
+:icons: font
+:source-highlighter: highlightjs
+:toc: left
+:toclevels: 3
+
+
+== Article 생성
+
+=== Request
+
+include::{snippets}/post-article/http-request.adoc[]
+include::{snippets}/post-article/request-fields.adoc[]
+
+=== Response
+
+include::{snippets}/post-article/http-response.adoc[]
+include::{snippets}/post-article/response-fields.adoc[]
