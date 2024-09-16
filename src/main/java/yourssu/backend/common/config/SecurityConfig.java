@@ -68,6 +68,7 @@ public class SecurityConfig {
                         authorizeHttpRequests
                                 .requestMatchers("/api/v1/sign-up").permitAll()
                                 .requestMatchers("/api/v1/sign-in").permitAll()
+                                .requestMatchers("/docs/**").permitAll()
                                 .anyRequest().authenticated()
                 )
                 .addFilterBefore(
