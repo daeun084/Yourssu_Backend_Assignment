@@ -317,8 +317,11 @@ public class ArticleControllerTest {
                 .andExpect(jsonPath("$.result").value("SUCCESS"))
                 .andExpect(jsonPath("$.message").value("게시물 삭제에 성공했습니다."))
                 .andDo(document("delete-article",
+                        requestHeaders(
+                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer token")
+                        ),
                         pathParameters(
-                                parameterWithName("articleId").description("Article Id")
+                                parameterWithName("articleId").description("삭제할 Article 객체의 PK")
                         ),
                         responseFields(
                                 fieldWithPath("code").description("상태 코드"),

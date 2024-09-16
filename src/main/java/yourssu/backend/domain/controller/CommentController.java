@@ -32,6 +32,6 @@ public class CommentController {
     public ApiResponse deleteComment(@PathVariable(name = "commentId") Long commentId,
                                      @AuthenticationPrincipal UserPrincipal userprincipal){
         commentService.deleteComment(commentId, userprincipal);
-        return ApiResponse.SuccessResponse(SuccessStatus.ARTICLE_DELETE_SUCCESS);
+        return ApiResponse.SuccessResponse(SuccessStatus.COMMENT_DELETE_SUCCESS);
     }
 }

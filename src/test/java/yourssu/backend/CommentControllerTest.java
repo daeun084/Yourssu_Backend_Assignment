@@ -24,7 +24,6 @@ import yourssu.backend.common.security.UserPrincipal;
 import yourssu.backend.common.status.ErrorStatus;
 import yourssu.backend.domain.controller.CommentController;
 import yourssu.backend.domain.converter.UserConverter;
-import yourssu.backend.domain.dto.request.ArticleRequest;
 import yourssu.backend.domain.dto.request.CommentRequest;
 import yourssu.backend.domain.dto.response.CommentResponse;
 import yourssu.backend.domain.dto.response.TokenDto;
@@ -34,9 +33,12 @@ import yourssu.backend.domain.service.CommentService;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
 import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.patch;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
@@ -297,6 +299,77 @@ public class CommentControllerTest {
     }
 
 
+    @Test
+    @DisplayName("삭제할 Comment의 PK를 PathVariable로 받아 Comment 객체를 삭제한다.")
+    public void deleteArticle() throws Exception {
+        // set authentication
+        String authenticationToken = setAuthentication("test@mail.com", "user", "1234");
+
+        // given
+        willDoNothing().given(commentService).deleteComment(any(), any());
+
+        // when&then
+        mockMvc.perform(delete("/api/v1/comment/{commentId}", 1L)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer "+authenticationToken)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("200"))
+                .andExpect(jsonPath("$.result").value("SUCCESS"))
+                .andExpect(jsonPath("$.message").value("댓글 삭제에 성공했습니다."))
+                .andDo(document("delete-comment",
+                        requestHeaders(
+                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer token")
+                        ),
+                        pathParameters(
+                                parameterWithName("commentId").description("삭제할 Comment 객체의 PK")
+                        ),
+                        responseFields(
+                                fieldWithPath("code").description("상태 코드"),
+                                fieldWithPath("result").description("결과 성공 여부"),
+                                fieldWithPath("message").description("결과 메시지")
+                        )
+                ));
+    }
+
+    @Test
+    public void deleteCommentWithNonExistCommentId() throws Exception {
+        // set authentication
+        String authenticationToken = setAuthentication("test@mail.com", "user", "1234");
+
+        // given
+        // 존재하지 않는 comment에 대한 id를 pathvariable로 제공할 경우, 404 error
+        doThrow(new GeneralException(ErrorStatus.NOT_FOUND_COMMENT))
+                .when(commentService).deleteComment(eq(30L), any());
+
+        // when&then
+        mockMvc.perform(delete("/api/v1/comment/{commentId}", 30L)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer "+authenticationToken)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().is4xxClientError())
+                .andExpect(jsonPath("$.code").value("404"))
+                .andExpect(jsonPath("$.result").value("FAILURE"))
+                .andExpect(jsonPath("$.message").value("존재하지 않는 댓글입니다."));
+    }
+
+    @Test
+    public void deleteCommentWithUnAuthorizedUser() throws Exception {
+        // set authentication
+        String authenticationToken = setAuthentication("test@mail.com", "user", "1234");
+
+        // given
+        // Comment를 작성한 유저 정보와 로그인한 유저 정보가 일치하지 않을 경우, 403 error
+        doThrow(new GeneralException(ErrorStatus.FORBIDDEN_PATCH_COMMENT))
+                .when(commentService).deleteComment(eq(1L), any());
+
+        // when&then
+        mockMvc.perform(delete("/api/v1/comment/{commentId}", 1L)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer "+authenticationToken)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().is4xxClientError())
+                .andExpect(jsonPath("$.code").value("403"))
+                .andExpect(jsonPath("$.result").value("FAILURE"))
+                .andExpect(jsonPath("$.message").value("댓글 수정 권한이 없습니다."));
+    }
 
 
 }

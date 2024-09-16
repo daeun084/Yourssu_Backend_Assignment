@@ -31,3 +31,15 @@ include::{snippets}/patch-comment/request-fields.adoc[]
 
 include::{snippets}/patch-comment/http-response.adoc[]
 include::{snippets}/patch-comment/response-fields.adoc[]
+
+== Comment 삭제
+
+=== Request
+
+include::{snippets}/delete-comment/http-request.adoc[]
+include::{snippets}/delete-comment/path-parameters.adoc[]
+
+=== Response
+
+include::{snippets}/delete-comment/http-response.adoc[]
+include::{snippets}/delete-comment/response-fields.adoc[]
