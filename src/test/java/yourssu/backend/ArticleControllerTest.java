@@ -10,8 +10,10 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.web.servlet.MockMvc;
@@ -24,12 +26,15 @@ import yourssu.backend.domain.controller.ArticleController;
 import yourssu.backend.domain.converter.UserConverter;
 import yourssu.backend.domain.dto.request.ArticleRequest;
 import yourssu.backend.domain.dto.response.ArticleResponse;
+import yourssu.backend.domain.dto.response.TokenDto;
 import yourssu.backend.domain.entity.User;
 import yourssu.backend.domain.service.ArticleService;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.*;
+import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
+import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.patch;
@@ -37,7 +42,6 @@ import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -65,13 +69,19 @@ public class ArticleControllerTest {
     private CustomUserDetailService customUserDetailService;
 
 
-    private UsernamePasswordAuthenticationToken setAuthentication(String email, String username, String password) {
+    private String setAuthentication(String email, String username, String password) {
         User user = UserConverter.toUser(email, username, password);
         UserDetails userDetails = new UserPrincipal(user);
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-        return authenticationToken;
+
+        // token mocking
+        TokenDto tokenDto = new TokenDto("fakeAccessToken", "fakeRefreshToken");
+        given(jwtTokenProvider.createToken(any(Authentication.class)))
+                .willReturn(tokenDto);
+
+        return tokenDto.getAccessToken();
     }
 
     @Test
@@ -79,7 +89,7 @@ public class ArticleControllerTest {
     public void createArticle() throws Exception {
 
         // set authentication
-        UsernamePasswordAuthenticationToken authenticationToken = setAuthentication("test@mail.com", "user", "1234");
+        String authenticationToken = setAuthentication("test@mail.com", "user", "1234");
 
         // request
         ArticleRequest.ArticleDto request = new ArticleRequest.ArticleDto("Test1", "test1");
@@ -90,7 +100,7 @@ public class ArticleControllerTest {
 
         // when&then
         mockMvc.perform(post("/api/v1/article")
-                        .with(authentication(authenticationToken))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer "+authenticationToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -102,6 +112,9 @@ public class ArticleControllerTest {
                 .andExpect(jsonPath("$.data.title").value("Test1"))
                 .andExpect(jsonPath("$.data.content").value("test1"))
                 .andDo(document("post-article",
+                        requestHeaders(
+                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer token")
+                        ),
                         requestFields(
                                 fieldWithPath("title").description("작성할 Article의 제목"),
                                 fieldWithPath("content").description("작성할 Article의 본문")
@@ -121,7 +134,7 @@ public class ArticleControllerTest {
     @Test
     public void createArticleWithInvalidTitle() throws Exception {
         // set authentication
-        UsernamePasswordAuthenticationToken authenticationToken = setAuthentication("test@mail.com", "user", "1234");
+        String authenticationToken = setAuthentication("test@mail.com", "user", "1234");
 
         // request
         ArticleRequest.ArticleDto request = new ArticleRequest.ArticleDto("  ", "test2");
@@ -132,7 +145,7 @@ public class ArticleControllerTest {
 
         // when&then
         mockMvc.perform(post("/api/v1/article")
-                        .with(authentication(authenticationToken))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer "+authenticationToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().is4xxClientError())
@@ -144,7 +157,7 @@ public class ArticleControllerTest {
     @Test
     public void createArticleWithInvalidContent() throws Exception {
         // set authentication
-        UsernamePasswordAuthenticationToken authenticationToken = setAuthentication("test@mail.com", "user", "1234");
+        String authenticationToken = setAuthentication("test@mail.com", "user", "1234");
 
         // request
         ArticleRequest.ArticleDto request = new ArticleRequest.ArticleDto("Test3", " ");
@@ -155,7 +168,7 @@ public class ArticleControllerTest {
 
         // when&then
         mockMvc.perform(post("/api/v1/article")
-                        .with(authentication(authenticationToken))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer "+authenticationToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().is4xxClientError())
@@ -168,7 +181,7 @@ public class ArticleControllerTest {
     @DisplayName("title, content를 RequestBody로 받아 Article 객체를 수정한 후 작성자의 이메일, 수정된 Article의 PK, title, content를 반환한다.")
     public void patchArticle() throws Exception {
         // set authentication
-        UsernamePasswordAuthenticationToken authenticationToken = setAuthentication("test@mail.com", "user", "1234");
+        String authenticationToken = setAuthentication("test@mail.com", "user", "1234");
 
         // request
         ArticleRequest.ArticleDto request = new ArticleRequest.ArticleDto("Test4", "test4");
@@ -179,7 +192,7 @@ public class ArticleControllerTest {
 
         // when&then
         mockMvc.perform(patch("/api/v1/article/{articleId}", 1L)
-                        .with(authentication(authenticationToken))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer "+authenticationToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -191,6 +204,9 @@ public class ArticleControllerTest {
                 .andExpect(jsonPath("$.data.title").value("Test4"))
                 .andExpect(jsonPath("$.data.content").value("test4"))
                 .andDo(document("patch-article",
+                        requestHeaders(
+                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer token")
+                        ),
                         pathParameters(
                                 parameterWithName("articleId").description("Article Id")
                         ),
@@ -213,7 +229,7 @@ public class ArticleControllerTest {
     @Test
     public void patchArticleWithInvalidContent() throws Exception {
         // set authentication
-        UsernamePasswordAuthenticationToken authenticationToken = setAuthentication("test@mail.com", "user", "1234");
+        String authenticationToken = setAuthentication("test@mail.com", "user", "1234");
 
         // request
         ArticleRequest.ArticleDto request = new ArticleRequest.ArticleDto("Test5", " ");
@@ -225,7 +241,7 @@ public class ArticleControllerTest {
 
         // when&then
         mockMvc.perform(patch("/api/v1/article/{articleId}", 1L)
-                        .with(authentication(authenticationToken))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer "+authenticationToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().is4xxClientError())
@@ -237,7 +253,7 @@ public class ArticleControllerTest {
     @Test
     public void patchArticleWithNonExistArticleId() throws Exception {
         // set authentication
-        UsernamePasswordAuthenticationToken authenticationToken = setAuthentication("test@mail.com", "user", "1234");
+        String authenticationToken = setAuthentication("test@mail.com", "user", "1234");
 
         // request
         ArticleRequest.ArticleDto request = new ArticleRequest.ArticleDto("Test6", "test6");
@@ -249,7 +265,7 @@ public class ArticleControllerTest {
 
         // when&then
         mockMvc.perform(patch("/api/v1/article/{articleId}", 30L)
-                        .with(authentication(authenticationToken))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer "+authenticationToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().is4xxClientError())
@@ -261,7 +277,7 @@ public class ArticleControllerTest {
     @Test
     public void patchArticleWithUnAuthorizedUser() throws Exception {
         // set authentication
-        UsernamePasswordAuthenticationToken authenticationToken = setAuthentication("test2@mail.com", "user2", "1234");
+        String authenticationToken = setAuthentication("test2@mail.com", "user2", "1234");
 
         // request
         ArticleRequest.ArticleDto request = new ArticleRequest.ArticleDto("Test7", "test7");
@@ -273,7 +289,7 @@ public class ArticleControllerTest {
 
         // when&then
         mockMvc.perform(patch("/api/v1/article/{articleId}", 1L)
-                        .with(authentication(authenticationToken))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer "+authenticationToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().is4xxClientError())
@@ -287,14 +303,14 @@ public class ArticleControllerTest {
     @DisplayName("삭제할 Article의 PK를 PathVariable로 받아 Article 객체를 삭제한다.")
     public void deleteArticle() throws Exception {
         // set authentication
-        UsernamePasswordAuthenticationToken authenticationToken = setAuthentication("test@mail.com", "user", "1234");
+        String authenticationToken = setAuthentication("test@mail.com", "user", "1234");
 
         // given
         willDoNothing().given(articleService).deleteArticle(any(), any());
 
         // when&then
         mockMvc.perform(delete("/api/v1/article/{articleId}", 1L)
-                        .with(authentication(authenticationToken))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer "+authenticationToken)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("200"))
@@ -315,7 +331,7 @@ public class ArticleControllerTest {
     @Test
     public void deleteArticleWithNonExistArticleId() throws Exception {
         // set authentication
-        UsernamePasswordAuthenticationToken authenticationToken = setAuthentication("test@mail.com", "user", "1234");
+        String authenticationToken = setAuthentication("test@mail.com", "user", "1234");
 
         // given
         // 존재하지 않는 article에 대한 id를 pathvariable로 제공할 경우, 404 error
@@ -324,7 +340,7 @@ public class ArticleControllerTest {
 
         // when&then
         mockMvc.perform(delete("/api/v1/article/{articleId}", 30L)
-                        .with(authentication(authenticationToken))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer "+authenticationToken)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is4xxClientError())
                 .andExpect(jsonPath("$.code").value("404"))
@@ -335,7 +351,7 @@ public class ArticleControllerTest {
     @Test
     public void deleteArticleWithUnAuthorizedUser() throws Exception {
         // set authentication
-        UsernamePasswordAuthenticationToken authenticationToken = setAuthentication("test@mail.com", "user", "1234");
+        String authenticationToken = setAuthentication("test@mail.com", "user", "1234");
 
         // given
         // Article을 작성한 유저 정보와 로그인한 유저 정보가 일치하지 않을 경우, 403 error
@@ -344,7 +360,7 @@ public class ArticleControllerTest {
 
         // when&then
         mockMvc.perform(delete("/api/v1/article/{articleId}", 1L)
-                        .with(authentication(authenticationToken))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer "+authenticationToken)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is4xxClientError())
                 .andExpect(jsonPath("$.code").value("403"))

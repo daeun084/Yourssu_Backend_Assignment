@@ -10,8 +10,10 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.web.servlet.MockMvc;
@@ -33,6 +35,8 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
+import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
@@ -207,7 +211,7 @@ public class UserControllerTest {
 
         // when&then
         mockMvc.perform(delete("/api/v1/withdrawal")
-                        .header("Authorization", ("Bearer " + token))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer "+token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -215,6 +219,9 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.result").value("SUCCESS"))
                 .andExpect(jsonPath("$.message").value("회원탈퇴에 성공했습니다."))
                 .andDo(document("delete-withdrawal",
+                        requestHeaders(
+                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer token")
+                        ),
                         requestFields(
                                 fieldWithPath("email").description("이메일 주소"),
                                 fieldWithPath("password").description("비밀번호")
@@ -230,19 +237,7 @@ public class UserControllerTest {
     @Test
     public void withdrawalWithInvalidUser() throws Exception {
         UserRequest.WithDrawalDto withdrawalRequest = new UserRequest.WithDrawalDto("test@mail.com", "1234");
-
-        // 1. 모킹된 UserDetails 설정
-        User user = UserConverter.toUser("test2@mail.com", "user2", "1234");
-        UserDetails userDetails = new UserPrincipal(user);
-
-        // 2. customUserDetailService 모킹 설정
-        given(customUserDetailService.loadUserByUsername("test2@mail.com"))
-                .willReturn(userDetails);
-
-        // 3. Authentication 객체 생성 및 SecurityContext에 설정
-        UsernamePasswordAuthenticationToken authenticationToken =
-                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+        String authenticationToken = setAuthentication("test2@mail.com", "user2", "1234");
 
         // given
         doThrow(new GeneralException(ErrorStatus.FORBIDDEN_WITHDRAWAL))
@@ -250,13 +245,28 @@ public class UserControllerTest {
 
         // when&then
         mockMvc.perform(delete("/api/v1/withdrawal")
-                        .with(authentication(authenticationToken))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer "+authenticationToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(withdrawalRequest)))
                 .andExpect(status().is4xxClientError())
                 .andExpect(jsonPath("$.code").value("403"))
                 .andExpect(jsonPath("$.result").value("FAILURE"))
                 .andExpect(jsonPath("$.message").value("계정탈퇴 권한이 없습니다."));
+    }
+
+    private String setAuthentication(String email, String username, String password) {
+        User user = UserConverter.toUser(email, username, password);
+        UserDetails userDetails = new UserPrincipal(user);
+        UsernamePasswordAuthenticationToken authenticationToken =
+                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+
+        // token mocking
+        TokenDto tokenDto = new TokenDto("fakeAccessToken", "fakeRefreshToken");
+        given(jwtTokenProvider.createToken(any(Authentication.class)))
+                .willReturn(tokenDto);
+
+        return tokenDto.getAccessToken();
     }
 
 
